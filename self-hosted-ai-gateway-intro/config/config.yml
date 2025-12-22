@@ -1,0 +1,30 @@
+model_list:
+  
+  - model_name: llm
+    litellm_params:
+      model: openai/gpt-oss:20b
+      api_base: http://10.3.0.42:11434/v1
+      api_key: EMPTY
+      drop_params: true
+      "weight": 1
+      "max_parallel_requests": 10
+
+  # --- Nebius ---
+  - model_name: llm
+    litellm_params:
+      model: openai/openai/gpt-oss-20b
+      api_base: https://api.tokenfactory.nebius.com/v1
+      api_key: os.environ/NEBIUS_API_KEY
+      temperature: 0.2
+      "weight": 2
+      "max_parallel_requests": 10
+
+
+
+general_settings:
+  master_key: sk-litellm-admin
+  drop_params: true
+  usage_limits:
+    sk-litellm-admin:
+      max_tokens: 1000
+      max_requests: 3

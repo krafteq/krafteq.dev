@@ -1,0 +1,67 @@
+services:
+  litellm:
+    image: ghcr.io/berriai/litellm:v1.80.10.rc.3
+    container_name: litellm-proxy
+    ports:
+      - "4000:4000"
+      - "4001:4001"
+    volumes:
+      - ./config/config.yml:/app/config.yaml
+    environment:
+      NEBIUS_API_KEY: ${NEBIUS_API_KEY}
+      DATABASE_URL: postgresql://litellm:litellm@postgres:5432/litellm
+      REDIS_URL: redis://redis:6379
+      STORE_MODEL_IN_DB: "True"
+      LITELLM_MASTER_KEY: sk-litellm-admin
+      # UI_ENABLED: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command:
+      - "--config"
+      - "/app/config.yaml"
+      - "--port"
+      - "4000"
+      # - "--port"
+      # - "4001"
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: litellm
+      POSTGRES_USER: litellm
+      POSTGRES_PASSWORD: litellm
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U litellm"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  openwebui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: openwebui
+    ports:
+      - "3000:8080"
+    environment:
+      - OPENAI_API_BASE_URL=http://litellm:4000/v1
+      - OPENAI_API_KEY=sk-litellm-admin
+    depends_on:
+      - litellm
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  ollama:
