@@ -1,0 +1,14 @@
+
+services:
+  detector:
+    build: .
+    container_name: diary-log-detector
+    env_file:
+      - .env
+    environment:
+      - OLLAMA_HOST=http://host.docker.internal:11434
+      - HEADLESS=true
+    volumes:
+      - ./logs:/app/logs
+      - ./vision_config.yaml:/app/vision_config.yaml
+    restart: unless-stopped

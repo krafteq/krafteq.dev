@@ -1,0 +1,15 @@
+
+# Core
+opencv-python>=4.8.0            # use opencv-python-headless if running server only
+python-dotenv>=1.0.0
+pyyaml>=6.0.1
+yt-dlp>=2024.1.0                # for YouTube stream support
+
+# LLM providers — install only what you need
+ollama>=0.1.7                   # for LLM_PROVIDER=ollama
+google-genai>=1.0.0              # for LLM_PROVIDER=gemini
+openai>=1.0.0                   # for LLM_PROVIDER=openai
+anthropic>=0.25.0               # for LLM_PROVIDER=anthropic
+
+# Gemini image support
+Pillow>=10.0.0

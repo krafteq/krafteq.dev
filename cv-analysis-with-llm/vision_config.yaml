@@ -1,0 +1,86 @@
+cameras:
+  - name: "Front Door"
+    type: ip
+    ip: 192.168.0.60
+    user: admin
+    password: admin
+    port: 554
+    stream: "0"
+    active: false          # use IP camera in Docker
+
+  - name: "USB Webcam"
+    type: usb
+    device_index: 0
+    active: false         # only works outside Docker on Windows
+
+  - name: "Shinjuku Station Tokyo"
+    type: stream
+    url: "https://www.youtube.com/watch?v=lA6TaaMGgDo"
+    active: true
+
+# ---------------------------------------------------------------------------
+# Event definitions
+# Each event has a tag (used in logs), keywords to match against LLM output,
+# and which fields to check (objects / people / actions — or all three)
+# notify: true means this event also triggers an email notification
+# ---------------------------------------------------------------------------
+events:
+
+  # --- People ---
+  - tag: PERSON_DETECTED
+    match_in: [people]
+    keywords: [person, human, man, woman, child, individual]
+    notify: false
+
+  - tag: MULTIPLE_PEOPLE
+    match_in: [people]
+    keywords: [two, three, four, group, crowd, several, multiple]
+    notify: true
+
+  # --- Activity ---
+  - tag: WORKING
+    match_in: [actions]
+    keywords: [typing, writing, working, reading, studying]
+    notify: false
+
+  - tag: EATING_DRINKING
+    match_in: [actions, objects]
+    keywords: [eating, drinking, food, cup, bottle, glass, plate, snack]
+    notify: false
+
+  - tag: PHONE_USE
+    match_in: [actions, objects]
+    keywords: [phone, mobile, scrolling, calling, texting]
+    notify: false
+
+  - tag: EXERCISE
+    match_in: [actions]
+    keywords: [exercising, stretching, running, jumping, workout]
+    notify: false
+
+  # --- Security ---
+  - tag: UNKNOWN_PERSON
+    match_in: [people]
+    keywords: [unknown, stranger, unrecognized, unfamiliar]
+    notify: true
+
+  - tag: PACKAGE_DELIVERY
+    match_in: [actions, objects]
+    keywords: [package, parcel, delivery, box, courier, dropping]
+    notify: true
+
+  - tag: DOOR_ACTIVITY
+    match_in: [actions]
+    keywords: [opening, closing, entering, leaving, knocking, door]
+    notify: true
+
+  # --- Environment ---
+  - tag: EMPTY_ROOM
+    match_in: [people]
+    keywords: [none, nobody, empty, no person, no people]
+    notify: false
+
+  - tag: PET_DETECTED
+    match_in: [objects, actions]
+    keywords: [dog, cat, pet, animal, bird]
+    notify: false
