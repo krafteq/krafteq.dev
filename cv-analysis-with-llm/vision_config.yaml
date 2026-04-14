@@ -6,23 +6,25 @@ cameras:
     password: admin
     port: 554
     stream: "0"
-    active: false          # use IP camera in Docker
+    context: "front door security camera at a residential property"
+    active: false
 
   - name: "USB Webcam"
     type: usb
     device_index: 0
-    active: false         # only works outside Docker on Windows
+    context: "indoor USB webcam pointed at a desk or workspace"
+    active: false
 
   - name: "Shinjuku Station Tokyo"
     type: stream
     url: "https://www.youtube.com/watch?v=lA6TaaMGgDo"
+    context: "live public camera at a busy Tokyo train station"
     active: true
 
 # ---------------------------------------------------------------------------
 # Event definitions
-# Each event has a tag (used in logs), keywords to match against LLM output,
-# and which fields to check (objects / people / actions — or all three)
-# notify: true means this event also triggers an email notification
+# context: extra instruction added to the LLM prompt when this event's
+#          fields are being analysed — makes the LLM focus on what matters
 # ---------------------------------------------------------------------------
 events:
 
@@ -30,57 +32,68 @@ events:
   - tag: PERSON_DETECTED
     match_in: [people]
     keywords: [person, human, man, woman, child, individual]
+    context: "focus on whether any individuals are visible, their approximate count and position"
     notify: false
 
   - tag: MULTIPLE_PEOPLE
     match_in: [people]
     keywords: [two, three, four, group, crowd, several, multiple]
+    context: "focus on estimating crowd size and whether the group appears stationary or moving"
     notify: true
 
   # --- Activity ---
   - tag: WORKING
     match_in: [actions]
     keywords: [typing, writing, working, reading, studying]
+    context: "focus on desk activity, screen usage, and whether someone appears to be working"
     notify: false
 
   - tag: EATING_DRINKING
     match_in: [actions, objects]
     keywords: [eating, drinking, food, cup, bottle, glass, plate, snack]
+    context: "focus on food or drink items and whether someone is consuming them"
     notify: false
 
   - tag: PHONE_USE
     match_in: [actions, objects]
     keywords: [phone, mobile, scrolling, calling, texting]
+    context: "focus on whether anyone is holding or looking at a mobile device"
     notify: false
 
   - tag: EXERCISE
     match_in: [actions]
     keywords: [exercising, stretching, running, jumping, workout]
+    context: "focus on physical movement patterns that suggest exercise or physical activity"
     notify: false
 
   # --- Security ---
   - tag: UNKNOWN_PERSON
     match_in: [people]
     keywords: [unknown, stranger, unrecognized, unfamiliar]
+    context: "focus on whether the person appears familiar or out of place, note clothing and behaviour"
     notify: true
 
   - tag: PACKAGE_DELIVERY
     match_in: [actions, objects]
     keywords: [package, parcel, delivery, box, courier, dropping]
+    context: "focus on whether anyone is carrying or leaving a package or parcel near the entrance"
     notify: true
 
   - tag: DOOR_ACTIVITY
     match_in: [actions]
     keywords: [opening, closing, entering, leaving, knocking, door]
+    context: "focus on the door — whether it is open or closed, and any interaction with it"
     notify: true
 
   # --- Environment ---
   - tag: EMPTY_ROOM
     match_in: [people]
     keywords: [none, nobody, empty, no person, no people]
+    context: "focus on whether the scene is completely devoid of people"
     notify: false
 
   - tag: PET_DETECTED
     match_in: [objects, actions]
     keywords: [dog, cat, pet, animal, bird]
+    context: "focus on whether any animals are visible and what they are doing"
     notify: false

@@ -25,19 +25,51 @@ def _resolve_stream_url(url: str) -> str:
             ydl_opts = {"quiet": True, "format": "best[ext=mp4]/best"}
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=False)
-                resolved = info["url"]
-                log.info(f"Resolved YouTube URL to direct stream")
-                return resolved
+                log.info("Resolved YouTube URL to direct stream")
+                return info["url"]
         except Exception as e:
             log.error(f"Failed to resolve YouTube URL: {e}")
     return url
 
 
+def _build_prompts(camera: dict, events: list[dict]) -> dict:
+    """
+    Build context-aware prompts using:
+    - camera context: sets the scene for all prompts
+    - event context: adds focused instruction per field based on active events
+    """
+    cam_ctx = camera.get("context", "a security camera")
+
+    # Collect extra context per field from event definitions
+    field_hints = {"objects": [], "people": [], "actions": []}
+    for event in events:
+        event_ctx = event.get("context", "")
+        if event_ctx:
+            for field in event.get("match_in", []):
+                if field in field_hints:
+                    field_hints[field].append(event_ctx)
+
+    def build(field: str, instruction: str) -> str:
+        hints = " ".join(set(field_hints[field]))  # deduplicate
+        hint_str = f" Additionally: {hints}" if hints else ""
+        return (
+            f"You are analysing {cam_ctx}. "
+            f"{instruction}{hint_str} "
+            f"Be concise — comma separated, no full sentences."
+        )
+
+    return {
+        "objects": build("objects", "List only the key physical objects visible."),
+        "people":  build("people",  "Describe visible people — count and appearance. If none, say 'none'."),
+        "actions": build("actions", "Describe the main activities or actions happening."),
+    }
+
+
 class CameraDetector:
     def __init__(self, camera: dict):
-        self.camera = camera
-        self.name   = camera["name"]
-        self.source = (
+        self.name    = camera["name"]
+        self.prompts = _build_prompts(camera, cfg.events)
+        self.source  = (
             camera["device_index"] if camera["type"] == "usb"
             else _resolve_stream_url(camera["url"]) if camera["type"] == "stream"
             else f"rtsp://{camera['user']}:{camera['password']}@{camera['ip']}:{camera['port']}/{camera['stream']}"
@@ -53,7 +85,7 @@ class CameraDetector:
         self.event_logger   = EventLogger(cfg.events)
         self.provider       = get_provider()
 
-        log.info(f"[{self.name}] Initializing...")
+        log.info(f"[{self.name}] Initializing | context: {camera.get('context', 'none')[:60]}")
         threading.Thread(target=self._llm_worker, daemon=True).start()
 
     def _llm_worker(self):
@@ -62,15 +94,10 @@ class CameraDetector:
             if frame is None:
                 break
             try:
-                log.info(f"[{self.name}] LLM worker received frame, sending to {os.getenv('LLM_PROVIDER', 'ollama')}...")
-
                 self.last_desc = {
-                    "objects": self._ask(frame,
-                        "List only the physical objects you see. Comma separated, no sentences."),
-                    "people":  self._ask(frame,
-                        "Describe the people in this image briefly (count, appearance). If none, say 'none'."),
-                    "actions": self._ask(frame,
-                        "What actions or activities are happening? Comma separated, no sentences."),
+                    "objects": self._ask(frame, self.prompts["objects"]),
+                    "people":  self._ask(frame, self.prompts["people"]),
+                    "actions": self._ask(frame, self.prompts["actions"]),
                 }
                 self._last_response = time.time()
 
@@ -81,7 +108,6 @@ class CameraDetector:
                          f"Actions: {self.last_desc['actions']}")
 
                 matched_tags = self.event_logger.log_events(self.name, self.last_desc)
-
                 notify_events = [
                     e for e in cfg.events
                     if e.get("tag") in matched_tags and e.get("notify", False)
@@ -94,9 +120,8 @@ class CameraDetector:
 
     def _ask(self, frame, prompt: str) -> str:
         try:
-            log.info(f"[{self.name}] Asking: '{prompt[:40]}...'")
             result = self.provider.ask(frame, prompt)
-            log.info(f"[{self.name}] Response: '{result[:80]}'")
+            log.info(f"[{self.name}] → {result[:80]}")
             return result
         except Exception as e:
             log.error(f"[{self.name}] Provider error: {e}")
@@ -110,15 +135,23 @@ class CameraDetector:
                 pass
 
     def _draw_overlay(self, frame):
-        cv2.putText(frame, self.name, (10, 30),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
-        y = 60
-        for label, key in [("Objects", "objects"), ("People", "people"), ("Actions", "actions")]:
+        overlay = frame.copy()
+        cv2.rectangle(overlay, (0, 0), (frame.shape[1], 120), (0, 0, 0), -1)
+        cv2.addWeighted(overlay, 0.4, frame, 0.6, 0, frame)
+
+        cv2.putText(frame, self.name, (10, 25),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
+        y = 50
+        for label, key, color in [
+            ("Objects", "objects", (200, 200, 200)),
+            ("People",  "people",  (100, 255, 100)),
+            ("Actions", "actions", (100, 200, 255)),
+        ]:
             val = self.last_desc.get(key)
             if val:
-                cv2.putText(frame, f"{label}: {val[:60]}", (10, y),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
-                y += 25
+                cv2.putText(frame, f"{label}: {val[:70]}", (10, y),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 1)
+                y += 22
 
     def _open_stream(self):
         cap = cv2.VideoCapture(self.source)
@@ -156,18 +189,15 @@ class CameraDetector:
                 now = time.time()
                 if now - self._last_analysis >= interval:
                     self._last_analysis = now
-
                     if self._last_response > 0 and (now - self._last_response) > LLM_TIMEOUT:
                         log.warning(f"[{self.name}] LLM timeout — no response in {LLM_TIMEOUT}s")
                         self.event_logger.log_timeout(self.name)
-
-                    log.info(f"[{self.name}] Sending frame to {os.getenv('LLM_PROVIDER', 'ollama')} ({os.getenv('LLM_MODEL', 'moondream')})...")
                     self._analyze_async(frame)
 
                 if not HEADLESS:
                     display = frame.copy()
                     self._draw_overlay(display)
-                    cv2.imshow(f"Detector — {self.name}", display)
+                    cv2.imshow(f"{self.name} — Live", display)
                     if cv2.waitKey(1) & 0xFF == ord('q'):
                         self._running = False
 
