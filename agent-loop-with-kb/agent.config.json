@@ -1,5 +1,7 @@
 {
-  "_comment": "Knitwit Agent — provider configuration. Copy this file and edit freely.",
+  "_comment": "Knitwit Agent config. project_path can be absolute or relative to this file.",
+
+  "project_path": "../knitwit",
 
   "manager": {
     "provider": "anthropic",
