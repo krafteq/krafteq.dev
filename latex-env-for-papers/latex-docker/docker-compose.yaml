@@ -1,0 +1,15 @@
+services:
+  latex:
+    build: .
+    container_name: latex-dev
+    ports:
+      - "8080:8080"
+    volumes:
+      # Your local projects folder → /workspace inside the container
+      - ./workspace:/workspace
+      # Persist MiKTeX package cache between restarts
+      - miktex-cache:/var/cache/miktex
+    restart: unless-stopped
+
+volumes:
+  miktex-cache:

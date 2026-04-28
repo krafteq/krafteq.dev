@@ -1,0 +1,38 @@
+\documentclass[12pt, a4paper]{article}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{hyperref}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+
+\title{My First Document}
+\author{Your Name}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+Welcome to your Dockerised \LaTeX{} environment powered by MiKTeX and VS Code.
+
+\section{Math Example}
+Einstein's famous equation:
+\begin{equation}
+  E = mc^2
+\end{equation}
+
+The quadratic formula:
+\begin{equation}
+  x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}
+\end{equation}
+
+\section{Lists}
+\begin{itemize}
+  \item MiKTeX auto-installs missing packages on first compile.
+  \item Save any \texttt{.tex} file to trigger an automatic build.
+  \item The PDF viewer opens in a side tab inside VS Code.
+\end{itemize}
+
+\end{document}
