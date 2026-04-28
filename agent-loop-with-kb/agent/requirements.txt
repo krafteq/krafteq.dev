@@ -1,0 +1,6 @@
+# Required
+anthropic>=0.40.0
+rich>=13.0.0
+
+# Optional — install only the providers you use
+# openai>=1.40.0        # OpenAI, Groq, Together AI, Mistral, Ollama

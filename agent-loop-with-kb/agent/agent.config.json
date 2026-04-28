@@ -1,0 +1,19 @@
+{
+  "_comment": "Knitwit Agent — provider configuration. Copy this file and edit freely.",
+
+  "manager": {
+    "provider": "anthropic",
+    "model": "claude-opus-4-5",
+    "api_key_env": "ANTHROPIC_API_KEY",
+    "base_url": null,
+    "max_tokens": 4096
+  },
+
+  "developer": {
+    "provider": "anthropic",
+    "model": "claude-sonnet-4-6",
+    "api_key_env": "ANTHROPIC_API_KEY",
+    "base_url": null,
+    "max_tokens": 8192
+  }
+}
