@@ -1,13 +1,14 @@
 {
-  "_comment": "Knitwit Agent config. project_path can be absolute or relative to this file.",
+  "_comment": "Each node can have its own model. reviewer/tester fall back to developer config if not set.",
 
+  "repo": "",
+  "branch": "main",
   "project_path": "../knitwit",
 
   "manager": {
     "provider": "anthropic",
     "model": "claude-opus-4-5",
     "api_key_env": "ANTHROPIC_API_KEY",
-    "base_url": null,
     "max_tokens": 4096
   },
 
@@ -15,7 +16,20 @@
     "provider": "anthropic",
     "model": "claude-sonnet-4-6",
     "api_key_env": "ANTHROPIC_API_KEY",
-    "base_url": null,
     "max_tokens": 8192
+  },
+
+  "reviewer": {
+    "provider": "anthropic",
+    "model": "claude-sonnet-4-6",
+    "api_key_env": "ANTHROPIC_API_KEY",
+    "max_tokens": 4096
+  },
+
+  "tester": {
+    "provider": "anthropic",
+    "model": "claude-sonnet-4-6",
+    "api_key_env": "ANTHROPIC_API_KEY",
+    "max_tokens": 4096
   }
 }

@@ -1,6 +1,8 @@
-# Required
-anthropic>=0.40.0
+# Core (required)
+langgraph>=0.2.0
+langchain-core>=0.3.0
 rich>=13.0.0
 
-# Optional — install only the providers you use
-# openai>=1.40.0        # OpenAI, Groq, Together AI, Mistral, Ollama
+# Install at least one of these depending on your provider:
+langchain-anthropic>=0.2.0   # Anthropic Claude
+# langchain-openai>=0.2.0    # OpenAI, Groq, Together AI, Mistral, Ollama
