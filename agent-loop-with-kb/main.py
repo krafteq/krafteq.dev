@@ -3,7 +3,7 @@ Knitwit Agent — entry point.
 
 Usage:
     python main.py "Add a drop-shoulder pattern"
-    python main.py                                          (interactive)
+    python main.py                                          (interactive or Jira)
     python main.py --repo https://github.com/you/repo "task"
     python main.py --repo https://github.com/you/repo --branch dev "task"
     python main.py --project /path/to/local/project "task"
@@ -13,6 +13,15 @@ Usage:
 import sys
 import atexit
 from pathlib import Path
+
+# Pin the agent's own directory at the FRONT of sys.path — permanently.
+# Must happen before any local imports so tools, agents, graph etc. are
+# always resolved from the agent folder, never from the cloned project.
+AGENT_DIR = Path(__file__).parent.resolve()
+if str(AGENT_DIR) in sys.path:
+    sys.path.remove(str(AGENT_DIR))
+sys.path.insert(0, str(AGENT_DIR))
+
 from rich.console import Console
 from rich.prompt import Prompt
 from rich.panel import Panel
@@ -91,22 +100,57 @@ def main():
         ("reviewer",  reviewer_model),
         ("tester",    tester_model),
     ]:
-        # Extract model name from the LangChain object
-        name = getattr(model_obj, "model_name", None) or getattr(model_obj, "model", "?")
+        name     = getattr(model_obj, "model_name", None) or getattr(model_obj, "model", "?")
         provider = type(model_obj).__name__.replace("Chat", "")
         table.add_row(role.capitalize(), provider, name)
     console.print(table)
     console.print()
 
-    # ── Get task ──────────────────────────────────────────────────────────────
-    task = " ".join(args).strip() if args else ""
+    # ── Get task: CLI arg → Jira → interactive prompt ─────────────────────────
+    from jira_utils import make_jira_client, format_task
+
+    task       = " ".join(args).strip() if args else ""
+    jira       = make_jira_client(cfg)
+    jira_issue = None
+
+    if not task and jira:
+        console.print("[dim]No task provided — checking Jira board…[/dim]")
+        try:
+            ticket = jira.fetch_next_ticket()
+            if ticket:
+                # summary = filename, description = instructions
+                task       = format_task(ticket["summary"], ticket["description"], ticket["key"])
+                jira_issue = ticket
+                console.print(
+                    f"[dim]Pulled [bold]{ticket['key']}[/bold]: {ticket['summary']}[/dim]"
+                )
+                jira.start_ticket(ticket["key"])
+            else:
+                console.print(
+                    f"[yellow]No '{jira.pull_status}' tickets on the board.[/yellow]"
+                )
+        except Exception as e:
+            console.print(f"[yellow]Jira fetch failed: {e}[/yellow]")
+
     if not task:
         task = Prompt.ask("[yellow]What should the agent do?[/yellow]")
+
     if not task.strip():
         console.print("[red]No task provided.[/red]")
         sys.exit(1)
 
-    console.print(Panel(f"[bold]Task:[/bold] {task}", style="yellow", expand=False))
+    label = (
+        f"[bold]{jira_issue['key']}[/bold] — {jira_issue['summary']}"
+        if jira_issue else task
+    )
+    console.print(Panel(f"[bold]Task:[/bold] {label}", style="yellow", expand=False))
+
+    # ── Create a branch for this task ────────────────────────────────────────
+    from git_utils import branch_name_from_ticket, create_branch, commit_and_push
+
+    if jira_issue:
+        branch = branch_name_from_ticket(jira_issue["key"], jira_issue["summary"])
+        create_branch(project_root, branch)
 
     # ── Build and run the graph ───────────────────────────────────────────────
     from graph import build_graph
@@ -125,6 +169,25 @@ def main():
     }
 
     final_state = app.invoke(initial_state)
+
+    # ── Commit and push branch ────────────────────────────────────────────────
+    if jira_issue:
+        commit_msg = f"{jira_issue['key']}: {jira_issue['summary']}"
+        pushed = commit_and_push(project_root, commit_msg)
+        if pushed:
+            console.print(f"[dim]Branch ready for PR on GitHub.[/dim]")
+
+    # ── Update Jira ticket on completion ──────────────────────────────────────
+    if jira and jira_issue:
+        try:
+            jira.complete_ticket(jira_issue["key"])
+            jira.add_comment(
+                jira_issue["key"],
+                f"Agent completed this task after {final_state['iterations']} iteration(s).\n\n"
+                f"Summary:\n{final_state.get('dev_output', '')[:1000]}"
+            )
+        except Exception as e:
+            console.print(f"[yellow]Jira update failed: {e}[/yellow]")
 
     console.print(Panel(
         f"✅  Done after {final_state['iterations']} iteration(s).",

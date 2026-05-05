@@ -1,35 +1,40 @@
 {
   "_comment": "Each node can have its own model. reviewer/tester fall back to developer config if not set.",
 
-  "repo": "",
-  "branch": "main",
-  "project_path": "../knitwit",
-
+  "repo": "https://github.com/krafteq/krafteq.dev",
+  "branch": "agent-loop-with-kb",
+  "project_path": "../agent-loop-with-kb-simple-project",
+  "jira": {
+    "base_url": "https://shraddhajasinska.atlassian.net",
+    "email_env": "JIRA_EMAIL",
+    "token_env": "JIRA_API_TOKEN",
+    "project_key": "KAN",
+    "pull_status": "To Do",
+    "in_progress_status": "In Progress",
+    "done_status": "Resolved"
+  },
   "manager": {
-    "provider": "anthropic",
-    "model": "claude-opus-4-5",
-    "api_key_env": "ANTHROPIC_API_KEY",
+    "provider": "openai",
+    "model": "gpt-4o",
+    "api_key_env": "OPENAI_API_KEY",
     "max_tokens": 4096
   },
-
   "developer": {
-    "provider": "anthropic",
-    "model": "claude-sonnet-4-6",
-    "api_key_env": "ANTHROPIC_API_KEY",
+    "provider": "openai",
+    "model": "gpt-4o-mini",
+    "api_key_env": "OPENAI_API_KEY",
     "max_tokens": 8192
   },
-
   "reviewer": {
-    "provider": "anthropic",
-    "model": "claude-sonnet-4-6",
-    "api_key_env": "ANTHROPIC_API_KEY",
+    "provider": "openai",
+    "model": "gpt-4o-mini",
+    "api_key_env": "OPENAI_API_KEY",
     "max_tokens": 4096
   },
-
   "tester": {
-    "provider": "anthropic",
-    "model": "claude-sonnet-4-6",
-    "api_key_env": "ANTHROPIC_API_KEY",
+    "provider": "openai",
+    "model": "gpt-4o-mini",
+    "api_key_env": "OPENAI_API_KEY",
     "max_tokens": 4096
   }
 }
