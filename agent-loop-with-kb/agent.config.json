@@ -1,40 +1,17 @@
 {
-  "_comment": "Each node can have its own model. reviewer/tester fall back to developer config if not set.",
+  "_comment": "Claude Code agent config. No model keys needed — Claude Code uses your claude login.",
 
-  "repo": "https://github.com/krafteq/krafteq.dev",
-  "branch": "agent-loop-with-kb",
-  "project_path": "../agent-loop-with-kb-simple-project",
+  "repo": "",
+  "branch": "main",
+  "project_path": "../knitwit",
+
   "jira": {
-    "base_url": "https://shraddhajasinska.atlassian.net",
-    "email_env": "JIRA_EMAIL",
-    "token_env": "JIRA_API_TOKEN",
-    "project_key": "KAN",
-    "pull_status": "To Do",
+    "base_url":           "https://shraddhajasinska.atlassian.net",
+    "email_env":          "JIRA_EMAIL",
+    "token_env":          "JIRA_API_TOKEN",
+    "project_key":        "KAN",
+    "pull_status":        "To Do",
     "in_progress_status": "In Progress",
-    "done_status": "Resolved"
-  },
-  "manager": {
-    "provider": "openai",
-    "model": "gpt-4o",
-    "api_key_env": "OPENAI_API_KEY",
-    "max_tokens": 4096
-  },
-  "developer": {
-    "provider": "openai",
-    "model": "gpt-4o-mini",
-    "api_key_env": "OPENAI_API_KEY",
-    "max_tokens": 8192
-  },
-  "reviewer": {
-    "provider": "openai",
-    "model": "gpt-4o-mini",
-    "api_key_env": "OPENAI_API_KEY",
-    "max_tokens": 4096
-  },
-  "tester": {
-    "provider": "openai",
-    "model": "gpt-4o-mini",
-    "api_key_env": "OPENAI_API_KEY",
-    "max_tokens": 4096
+    "done_status":        "Resolved"
   }
 }

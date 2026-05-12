@@ -1,8 +1,10 @@
-# Core (required)
+# Core
 langgraph>=0.2.0
 langchain-core>=0.3.0
 rich>=13.0.0
+requests>=2.31.0
 
-# Install the provider(s) you use
-langchain-openai>=0.2.0      # OpenAI, Groq, Together AI, Mistral, Ollama
-# langchain-anthropic>=0.2.0  # Anthropic Claude
+# Claude Code handles all LLM calls — no langchain-openai or langchain-anthropic needed
+# Install Claude Code separately:
+#   npm install -g @anthropic-ai/claude-code
+#   claude   (then log in)
