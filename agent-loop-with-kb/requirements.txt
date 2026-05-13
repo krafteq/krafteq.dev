@@ -1,0 +1,10 @@
+# Core
+langgraph>=0.2.0
+langchain-core>=0.3.0
+rich>=13.0.0
+requests>=2.31.0
+
+# Claude Code handles all LLM calls — no langchain-openai or langchain-anthropic needed
+# Install Claude Code separately:
+#   npm install -g @anthropic-ai/claude-code
+#   claude   (then log in)
