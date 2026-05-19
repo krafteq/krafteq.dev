@@ -6,7 +6,7 @@
   "project_path": "../knitwit",
 
   "jira": {
-    "base_url":           "https://xxx.atlassian.net",
+    "base_url":           "https://shraddhajasinska.atlassian.net",
     "email_env":          "JIRA_EMAIL",
     "token_env":          "JIRA_API_TOKEN",
     "project_key":        "KAN",
