@@ -55,7 +55,8 @@ def _build_prompts(camera: dict, events: list[dict]) -> dict:
         return (
             f"You are analysing {cam_ctx}. "
             f"{instruction}{hint_str} "
-            f"Be concise — comma separated, no full sentences."
+            f"Be concise — comma separated, no full sentences. "
+            f"Use plain ASCII characters only: no emoji, accents, or non-English scripts."
         )
 
     return {
