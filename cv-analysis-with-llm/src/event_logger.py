@@ -37,9 +37,9 @@ class EventLogger:
             keywords = [k.lower() for k in event.get("keywords", [])]
             fields   = event.get("match_in", ["objects", "people", "actions"])
 
-            search_text = " ".join([
-                observation.get(f, "") or "" for f in fields
-            ]).lower()
+            search_text = " ".join(
+                _as_text(observation.get(f)) for f in fields
+            ).lower()
 
             if any(kw in search_text for kw in keywords):
                 matched_tags.append(tag)
@@ -54,9 +54,9 @@ class EventLogger:
 
         # Build a short 5-word summary from observation
         parts = [
-            observation.get("actions") or "",
-            observation.get("people")  or "",
-            observation.get("objects") or "",
+            _as_text(observation.get("actions")) or "",
+            _as_text(observation.get("people"))  or "",
+            _as_text(observation.get("objects")) or "",
         ]
         combined  = ", ".join(p for p in parts if p)
         words     = combined.replace(",", "").split()
@@ -88,5 +88,18 @@ class EventLogger:
         self._file.write(json.dumps(entry) + "\n")
         self._file.flush()
 
+    def _as_text(value) -> str:
+        """Coerce an observation field to a searchable string.
+        Handles None, strings, and lists/tuples e.g. ['person', 'car']."""
+        if value is None:
+            return ""
+        if isinstance(value, str):
+            return value
+        if isinstance(value, (list, tuple)):
+            return " ".join(_as_text(v) for v in value)
+        return str(value)
+
     def close(self):
         self._file.close()
+
+    
