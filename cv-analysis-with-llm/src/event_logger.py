@@ -8,6 +8,18 @@ log = logging.getLogger(__name__)
 EVENTS_LOG_FILE = os.getenv("EVENTS_LOG_FILE", "logs/events.log")
 
 
+def _as_text(value) -> str:
+    """Coerce an observation field to a searchable string.
+    Handles None, strings, and lists/tuples e.g. ['person', 'car']."""
+    if value is None:
+        return ""
+    if isinstance(value, str):
+        return value
+    if isinstance(value, (list, tuple)):
+        return " ".join(_as_text(v) for v in value)
+    return str(value)
+
+
 class EventLogger:
     def __init__(self, events_config: list[dict]):
         """
@@ -47,16 +59,21 @@ class EventLogger:
         return matched_tags
 
     def log_events(self, camera_name: str, observation: dict) -> list[str]:
-        """Match and log events. Always writes a summary, tags if matched."""
+        """Match and log events. Only observations that match at least one
+        event are written — unmatched observations are skipped."""
         tags = self.match(camera_name, observation)
 
-        ts    = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        # Nothing matched — don't log this observation at all.
+        if not tags:
+            return tags
+
+        ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         # Build a short 5-word summary from observation
         parts = [
-            _as_text(observation.get("actions")) or "",
-            _as_text(observation.get("people"))  or "",
-            _as_text(observation.get("objects")) or "",
+            _as_text(observation.get("actions")),
+            _as_text(observation.get("people")),
+            _as_text(observation.get("objects")),
         ]
         combined  = ", ".join(p for p in parts if p)
         words     = combined.replace(",", "").split()
@@ -66,10 +83,10 @@ class EventLogger:
             "ts":      ts,
             "cam":     camera_name,
             "summary": summary,
-            "tags":    tags if tags else [],
+            "tags":    tags,
         }
 
-        log.info(f"[{camera_name}] {summary}" + (f" | {', '.join(tags)}" if tags else ""))
+        log.info(f"[{camera_name}] {summary} | {', '.join(tags)}")
         self._file.write(json.dumps(entry) + "\n")
         self._file.flush()
 
@@ -88,18 +105,5 @@ class EventLogger:
         self._file.write(json.dumps(entry) + "\n")
         self._file.flush()
 
-    def _as_text(value) -> str:
-        """Coerce an observation field to a searchable string.
-        Handles None, strings, and lists/tuples e.g. ['person', 'car']."""
-        if value is None:
-            return ""
-        if isinstance(value, str):
-            return value
-        if isinstance(value, (list, tuple)):
-            return " ".join(_as_text(v) for v in value)
-        return str(value)
-
     def close(self):
         self._file.close()
-
-    

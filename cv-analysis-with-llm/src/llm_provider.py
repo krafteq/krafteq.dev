@@ -18,6 +18,12 @@ import cv2
 
 log = logging.getLogger(__name__)
 
+# Cap on generated tokens per call. Light local models (moondream, llava) tend to
+# ramble, and the pipeline makes three calls per frame (objects, people, actions),
+# so unbounded output quickly becomes an excess-token problem. Tunable via .env.
+MAX_OUTPUT_TOKENS  = int(os.getenv("MAX_OUTPUT_TOKENS", "80"))
+OLLAMA_TEMPERATURE = float(os.getenv("OLLAMA_TEMPERATURE", "0.2"))
+
 
 def _encode_frame(frame) -> bytes:
     """Encode OpenCV frame to JPEG bytes."""
@@ -56,7 +62,11 @@ class OllamaProvider(VisionProvider):
                     "role": "user",
                     "content": prompt,
                     "images": [_encode_frame(frame)]
-                }]
+                }],
+                options={
+                    "num_predict": MAX_OUTPUT_TOKENS,   # cap output — fixes excess tokens on light models
+                    "temperature": OLLAMA_TEMPERATURE,  # steadier, more concise descriptions
+                },
             )
             return res["message"]["content"].strip()
         except Exception as e:
