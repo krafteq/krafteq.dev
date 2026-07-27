@@ -17,9 +17,9 @@ class Config:
         self._cameras       = self._load_cameras()
 
     def _load_cameras(self) -> list[dict]:
-        path = os.getenv("CAMERAS_CONFIG", "cameras.yaml")
+        path = os.getenv("CAMERAS_CONFIG", "vision_config.yaml")
         if not os.path.exists(path):
-            log.warning(f"cameras.yaml not found at '{path}'")
+            log.warning(f"vision_config.yaml not found at '{path}'")
             return []
         with open(path, "r", encoding="utf-8") as f:
             data = yaml.safe_load(f)
