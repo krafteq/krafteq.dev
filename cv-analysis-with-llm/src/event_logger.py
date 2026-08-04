@@ -32,6 +32,11 @@ class EventLogger:
         """
         self.events = events_config or []
 
+        # Tags whose event has notify: true — used to flag log entries.
+        self._notify_tags = {
+            e.get("tag") for e in self.events if e.get("notify", False)
+        }
+
         if not self.events:
             log.warning("No events defined in vision_config.yaml — event logging disabled")
         else:
@@ -69,6 +74,10 @@ class EventLogger:
 
         ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
+        # Which matched tags are notify events, and whether any fired.
+        notify_tags = [t for t in tags if t in self._notify_tags]
+        notify      = bool(notify_tags)
+
         # Build a short 5-word summary from observation
         parts = [
             _as_text(observation.get("actions")),
@@ -80,13 +89,16 @@ class EventLogger:
         summary   = " ".join(words[:5]) if words else "nothing observed"
 
         entry = {
-            "ts":      ts,
-            "cam":     camera_name,
-            "summary": summary,
-            "tags":    tags,
+            "ts":          ts,
+            "cam":         camera_name,
+            "summary":     summary,
+            "tags":        tags,
+            "notify":      notify,
+            "notify_tags": notify_tags,
         }
 
-        log.info(f"[{camera_name}] {summary} | {', '.join(tags)}")
+        marker = " [NOTIFY]" if notify else ""
+        log.info(f"[{camera_name}] {summary} | {', '.join(tags)}{marker}")
         self._file.write(json.dumps(entry) + "\n")
         self._file.flush()
 
@@ -96,10 +108,12 @@ class EventLogger:
         """Log an LLM timeout event."""
         ts    = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         entry = {
-            "ts":      ts,
-            "cam":     camera_name,
-            "summary": "LLM timeout no response",
-            "tags":    ["LLM_TIMEOUT"],
+            "ts":          ts,
+            "cam":         camera_name,
+            "summary":     "LLM timeout no response",
+            "tags":        ["LLM_TIMEOUT"],
+            "notify":      False,
+            "notify_tags": [],
         }
         log.warning(f"[{camera_name}] LLM_TIMEOUT")
         self._file.write(json.dumps(entry) + "\n")
