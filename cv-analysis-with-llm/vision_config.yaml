@@ -39,7 +39,7 @@ events:
     match_in: [people]
     keywords: [two, three, four, group, crowd, several, multiple]
     context: "focus on estimating crowd size and whether the group appears stationary or moving"
-    notify: true
+    notify: false
 
   # --- Activity ---
   - tag: WORKING
@@ -71,19 +71,19 @@ events:
     match_in: [people]
     keywords: [unknown, stranger, unrecognized, unfamiliar]
     context: "focus on whether the person appears familiar or out of place, note clothing and behaviour"
-    notify: true
+    notify: false
 
   - tag: PACKAGE_DELIVERY
     match_in: [actions, objects]
     keywords: [package, parcel, delivery, box, courier, dropping]
     context: "focus on whether anyone is carrying or leaving a package or parcel near the entrance"
-    notify: true
+    notify: false
 
   - tag: DOOR_ACTIVITY
     match_in: [actions]
     keywords: [opening, closing, entering, leaving, knocking, door]
     context: "focus on the door — whether it is open or closed, and any interaction with it"
-    notify: true
+    notify: false
 
   # --- Environment ---
   - tag: EMPTY_ROOM
@@ -96,4 +96,11 @@ events:
     match_in: [objects, actions]
     keywords: [dog, cat, pet, animal, bird]
     context: "focus on whether any animals are visible and what they are doing"
+    notify: false
+
+  # --- Appearance ---
+  - tag: RED_CLOTHING
+    match_in: [people]
+    keywords: [red, crimson, scarlet, maroon]
+    context: "focus on the colour of each person's clothing and name the colours explicitly, e.g. 'red jacket', 'blue coat'"
     notify: false

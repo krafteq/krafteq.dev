@@ -55,13 +55,15 @@ def _build_prompts(camera: dict, events: list[dict]) -> dict:
         return (
             f"You are analysing {cam_ctx}. "
             f"{instruction}{hint_str} "
-            f"Be concise — comma separated, no full sentences."
+            f"Answer in words only — never with numbers, coordinates, or bounding boxes. "
+            f"Be concise — comma separated, no full sentences. "
+            f"Use plain ASCII characters only: no emoji, accents, or non-English scripts."
         )
 
     return {
-        "objects": build("objects", "List only the key physical objects visible."),
-        "people":  build("people",  "Describe visible people — count and appearance. If none, say 'none'."),
-        "actions": build("actions", "Describe the main activities or actions happening."),
+        "objects": build("objects", "What physical objects are visible? Answer in a few words."),
+        "people":  build("people",  "How many people are visible and what do they look like? If none, say 'none'."),
+        "actions": build("actions", "What are the people or objects doing?"),
     }
 
 
@@ -121,7 +123,7 @@ class CameraDetector:
     def _ask(self, frame, prompt: str) -> str:
         try:
             result = self.provider.ask(frame, prompt)
-            log.info(f"[{self.name}] → {result[:80]}")
+            log.info(f"[{self.name}] -> {result[:80]}")
             return result
         except Exception as e:
             log.error(f"[{self.name}] Provider error: {e}")
